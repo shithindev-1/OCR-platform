@@ -1,0 +1,1197 @@
+{
+  "info": {
+    "name": "OCR Platform API",
+    "description": "One project, two services: **Leasing OCR** and **Cheque OCR**.\n\n1. Start it: `python -m app` (both services) - Swagger at `{{baseUrl}}/docs`.\n2. Set `baseUrl` (default http://localhost:8000) and `apiKey` (leave empty when API_KEYS is empty locally).\n3. For each upload request, open the Body tab and pick your files in the `file` / `files` rows.\n\nOne `X-API-Key` header is accepted by both services.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "key",
+        "value": "X-API-Key",
+        "type": "string"
+      },
+      {
+        "key": "value",
+        "value": "{{apiKey}}",
+        "type": "string"
+      },
+      {
+        "key": "in",
+        "value": "header",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8000"
+    },
+    {
+      "key": "apiKey",
+      "value": ""
+    },
+    {
+      "key": "jobId",
+      "value": ""
+    },
+    {
+      "key": "ocrFileUrl",
+      "value": ""
+    },
+    {
+      "key": "ocrBlobPath",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "description": "Open (no API key). `/health` is the load-balancer probe; `/api/v1/health` adds the version and which services this process runs.",
+      "item": [
+        {
+          "name": "Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        },
+        {
+          "name": "Health - version and running services",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "health"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Leasing OCR",
+      "description": "Identity and company documents. Errors are `{\"detail\": ...}` (the original `/api/v1/ocr` answers in its own `errorInfo` shape). For plain-http local testing set `REQUIRE_HTTPS=false` in .env.",
+      "item": [
+        {
+          "name": "Upload files (direct)",
+          "description": "Attach the files in the Body tab (pick a file in each `file` row). Rows with the same key are paired by position.",
+          "item": [
+            {
+              "name": "Leasing - upload files",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/upload",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "upload"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "tenant_type",
+                      "value": "individual",
+                      "type": "text",
+                      "description": "individual or company - sent once per request"
+                    },
+                    {
+                      "key": "document_refnumber",
+                      "value": "1001",
+                      "type": "text",
+                      "description": "Your reference for this request - sent once per request"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "National ID, front"
+                    },
+                    {
+                      "key": "document_id",
+                      "value": "16",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_type",
+                      "value": "National Id",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_name",
+                      "value": "National ID Front",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "National ID, back"
+                    },
+                    {
+                      "key": "document_id",
+                      "value": "17",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_type",
+                      "value": "National Id",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_name",
+                      "value": "National ID Back",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Passport"
+                    },
+                    {
+                      "key": "document_id",
+                      "value": "18",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_type",
+                      "value": "Passport",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_name",
+                      "value": "Passport",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "description": "Several documents at once. `file`, `document_id`, `document_type`, `document_name` are repeated and paired by position."
+              }
+            },
+            {
+              "name": "Leasing - upload files (background job, for a progress bar)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/jobs/upload",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "jobs",
+                    "upload"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "tenant_type",
+                      "value": "individual",
+                      "type": "text",
+                      "description": "individual or company - sent once per request"
+                    },
+                    {
+                      "key": "document_refnumber",
+                      "value": "1001",
+                      "type": "text",
+                      "description": "Your reference for this request - sent once per request"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "National ID, front"
+                    },
+                    {
+                      "key": "document_id",
+                      "value": "16",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_type",
+                      "value": "National Id",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_name",
+                      "value": "National ID Front",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "National ID, back"
+                    },
+                    {
+                      "key": "document_id",
+                      "value": "17",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_type",
+                      "value": "National Id",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_name",
+                      "value": "National ID Back",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Passport"
+                    },
+                    {
+                      "key": "document_id",
+                      "value": "18",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_type",
+                      "value": "Passport",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_name",
+                      "value": "Passport",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "description": "Same form as the upload above, answered at once with a job id (saved to `jobId`). Poll **Job progress and result**."
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Job started\", () => pm.response.to.have.status(202));",
+                      "pm.collectionVariables.set(\"jobId\", pm.response.json().job_id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Leasing - upload files, links in the form",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/upload",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "upload"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "tenant_type",
+                      "value": "individual",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_refnumber",
+                      "value": "1001",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[0][source]",
+                      "value": "ApplicationFiles/LeasingRequestOCR/1/abc/NID Front.jpg",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[0][document_id]",
+                      "value": "16",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[0][document_type]",
+                      "value": "National Id",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[0][document_name]",
+                      "value": "National ID Front",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[1][source]",
+                      "value": "ApplicationFiles/LeasingRequestOCR/1/abc/Passport.pdf",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[1][document_id]",
+                      "value": "18",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[1][document_type]",
+                      "value": "Passport",
+                      "type": "text"
+                    },
+                    {
+                      "key": "sources[1][document_name]",
+                      "value": "Passport",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "description": "The same documents the JSON route takes, for clients that can only send form-data."
+              }
+            },
+            {
+              "name": "Leasing - original /ocr, upload files",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-Detection",
+                    "value": "off",
+                    "disabled": true,
+                    "description": "off = skip crop/rotate for this request"
+                  },
+                  {
+                    "key": "X-Validation",
+                    "value": "off",
+                    "disabled": true,
+                    "description": "off = skip the verification pass for this request"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "First document"
+                    },
+                    {
+                      "key": "documentName",
+                      "value": "National ID Front",
+                      "type": "text"
+                    },
+                    {
+                      "key": "documentType",
+                      "value": "National Id",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Second document"
+                    },
+                    {
+                      "key": "documentName",
+                      "value": "Passport",
+                      "type": "text"
+                    },
+                    {
+                      "key": "documentType",
+                      "value": "Passport",
+                      "type": "text"
+                    }
+                  ]
+                },
+                "description": "The original multipart endpoint: `file`, `documentName`, `documentType` repeated and paired by position. Errors come back in its own `errorInfo` shape."
+              }
+            },
+            {
+              "name": "Leasing - type detection, upload files",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/detect/upload",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "detect",
+                    "upload"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "tenant_type",
+                      "value": "individual",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_refnumber",
+                      "value": "1001",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Any file: the API finds each document's type itself (several documents may share one file)"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Another file (optional)"
+                    }
+                  ]
+                },
+                "description": "No document types to send: the API finds each document's type itself."
+              }
+            },
+            {
+              "name": "Leasing - type detection, upload files (background job)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/detect/jobs/upload",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "detect",
+                    "jobs",
+                    "upload"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "tenant_type",
+                      "value": "individual",
+                      "type": "text"
+                    },
+                    {
+                      "key": "document_refnumber",
+                      "value": "1001",
+                      "type": "text"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Any file: the API finds each document's type itself (several documents may share one file)"
+                    },
+                    {
+                      "key": "file",
+                      "type": "file",
+                      "src": [],
+                      "description": "Another file (optional)"
+                    }
+                  ]
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Job started\", () => pm.response.to.have.status(202));",
+                      "pm.collectionVariables.set(\"jobId\", pm.response.json().job_id);"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "By link (JSON)",
+          "description": "Documents named by URL or blob path; the API downloads them itself.",
+          "item": [
+            {
+              "name": "Leasing - by links",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_type\": \"individual\",\n  \"document_refnumber\": \"1001\",\n  \"sources\": [\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/NID Front.jpg\",\n      \"document_id\": \"16\",\n      \"document_type\": \"National Id\",\n      \"document_name\": \"National ID Front\"\n    },\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/NID Back.jpg\",\n      \"document_id\": \"17\",\n      \"document_type\": \"National Id\",\n      \"document_name\": \"National ID Back\"\n    },\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/Passport.pdf\",\n      \"document_id\": \"18\",\n      \"document_type\": \"Passport\",\n      \"document_name\": \"Passport\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Leasing - by links (background job)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/jobs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "jobs"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_type\": \"individual\",\n  \"document_refnumber\": \"1001\",\n  \"sources\": [\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/NID Front.jpg\",\n      \"document_id\": \"16\",\n      \"document_type\": \"National Id\",\n      \"document_name\": \"National ID Front\"\n    },\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/NID Back.jpg\",\n      \"document_id\": \"17\",\n      \"document_type\": \"National Id\",\n      \"document_name\": \"National ID Back\"\n    },\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/Passport.pdf\",\n      \"document_id\": \"18\",\n      \"document_type\": \"Passport\",\n      \"document_name\": \"Passport\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Job started\", () => pm.response.to.have.status(202));",
+                      "pm.collectionVariables.set(\"jobId\", pm.response.json().job_id);"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "name": "Leasing - type detection, by links",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/detect",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "detect"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_type\": \"individual\",\n  \"document_refnumber\": \"1001\",\n  \"sources\": [\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/NID Front.jpg\"\n    },\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/Passport.pdf\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Leasing - type detection, by links (background job)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/detect/jobs",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "detect",
+                    "jobs"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_type\": \"individual\",\n  \"document_refnumber\": \"1001\",\n  \"sources\": [\n    {\n      \"source\": \"ApplicationFiles/LeasingRequestOCR/1/abc/NID Front.jpg\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [
+                      "pm.test(\"Job started\", () => pm.response.to.have.status(202));",
+                      "pm.collectionVariables.set(\"jobId\", pm.response.json().job_id);"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Job progress and results",
+          "description": "",
+          "item": [
+            {
+              "name": "Job progress and result",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/jobs/{{jobId}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "jobs",
+                    "{{jobId}}"
+                  ]
+                },
+                "description": "Poll until `status` is Completed. `result` is null while Processing."
+              }
+            },
+            {
+              "name": "View an OCR result file, by URL",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/files?url={{ocrFileUrl}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "files"
+                  ],
+                  "query": [
+                    {
+                      "key": "url",
+                      "value": "{{ocrFileUrl}}"
+                    }
+                  ]
+                },
+                "description": "Pass a source's `ocr_file` URL as `url`. Shown inline."
+              }
+            },
+            {
+              "name": "View an OCR result file, by blob path",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing/files/{{ocrBlobPath}}",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing",
+                    "files",
+                    "{{ocrBlobPath}}"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checks",
+          "description": "Requests that should be refused - a quick look that auth and validation work.",
+          "item": [
+            {
+              "name": "Auth - missing API key (expect 401)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tenant_type\": \"individual\",\n  \"document_refnumber\": \"1\",\n  \"sources\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              }
+            },
+            {
+              "name": "Validation - empty body (expect 422)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/ocr/leasing",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "ocr",
+                    "leasing"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Cheque OCR",
+      "description": "Cheque extraction and matching. Errors are `{\"error\": ...}`; every response carries an `X-Request-ID`.",
+      "item": [
+        {
+          "name": "Extract",
+          "description": "Read cheques only - no payments to match.",
+          "item": [
+            {
+              "name": "Cheque - extract, upload one cheque",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/extract",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "extract"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "files",
+                      "type": "file",
+                      "src": [],
+                      "description": "One cheque image or PDF"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cheque - extract, upload several cheques",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/extract",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "extract"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "files",
+                      "type": "file",
+                      "src": [],
+                      "description": "Cheque 1"
+                    },
+                    {
+                      "key": "files",
+                      "type": "file",
+                      "src": [],
+                      "description": "Cheque 2"
+                    },
+                    {
+                      "key": "files",
+                      "type": "file",
+                      "src": [],
+                      "description": "Cheque 3"
+                    }
+                  ]
+                },
+                "description": "Up to `max_files_per_request` (default 20) files; one file may hold several cheques."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Match to payments",
+          "description": "Read the cheques and match each to the expected rent payments by Amount + DueDate. `cheque_info` is optional and sent once.",
+          "item": [
+            {
+              "name": "Cheque - match, upload files",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/match/upload",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "match",
+                    "upload"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "files",
+                      "type": "file",
+                      "src": [],
+                      "description": "Cheque 1"
+                    },
+                    {
+                      "key": "files",
+                      "type": "file",
+                      "src": [],
+                      "description": "Cheque 2"
+                    },
+                    {
+                      "key": "payments",
+                      "value": "[{\"RentPaymentId\": 94814, \"Installment\": 1, \"ServiceId\": 1, \"ServiceDescription\": \"Property Rent\", \"Amount\": 8400, \"DueDate\": \"2026-11-05T00:00:00\"}, {\"RentPaymentId\": 94815, \"Installment\": 2, \"ServiceId\": 1, \"ServiceDescription\": \"Property Rent\", \"Amount\": 8400, \"DueDate\": \"2026-10-17T00:00:00\"}, {\"RentPaymentId\": 94819, \"Installment\": 1, \"ServiceId\": 4, \"ServiceDescription\": \"VAT on Rent\", \"Amount\": 840, \"DueDate\": \"2026-08-14T00:00:00\"}]",
+                      "type": "text",
+                      "description": "JSON list of the expected payments"
+                    },
+                    {
+                      "key": "cheque_info",
+                      "value": "{\"ChequepayeeName\": null, \"ChequeHolderName\": null, \"ChequeHolderNameAr\": null, \"ChequeHolderIBAN\": null}",
+                      "type": "text",
+                      "description": "Optional JSON object checked for every payment"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "name": "Cheque - match, by file links",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/match",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "match"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"file_urls\": [\n    \"cheque1.jpg\",\n    \"cheque2.jpg\"\n  ],\n  \"cheque_info\": {\n    \"ChequepayeeName\": null,\n    \"ChequeHolderName\": null,\n    \"ChequeHolderNameAr\": null,\n    \"ChequeHolderIBAN\": null\n  },\n  \"payments\": [\n    {\n      \"RentPaymentId\": 94814,\n      \"Installment\": 1,\n      \"ServiceId\": 1,\n      \"ServiceDescription\": \"Property Rent\",\n      \"Amount\": 8400,\n      \"DueDate\": \"2026-11-05T00:00:00\"\n    },\n    {\n      \"RentPaymentId\": 94815,\n      \"Installment\": 2,\n      \"ServiceId\": 1,\n      \"ServiceDescription\": \"Property Rent\",\n      \"Amount\": 8400,\n      \"DueDate\": \"2026-10-17T00:00:00\"\n    },\n    {\n      \"RentPaymentId\": 94819,\n      \"Installment\": 1,\n      \"ServiceId\": 4,\n      \"ServiceDescription\": \"VAT on Rent\",\n      \"Amount\": 840,\n      \"DueDate\": \"2026-08-14T00:00:00\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "description": "`file_urls`: blob URLs inside the configured container, or (APP_ENV=local) file names in `local_files_dir`."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Checks",
+          "description": "Requests that should be refused.",
+          "item": [
+            {
+              "name": "Auth - missing API key (expect 401)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/match",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "match"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"file_urls\": [\n    \"cheque_1.pdf\"\n  ],\n  \"payments\": [\n    {\n      \"Amount\": 1,\n      \"DueDate\": \"2026-01-01\"\n    }\n  ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": {
+                  "type": "noauth"
+                }
+              }
+            },
+            {
+              "name": "Validation - no files (expect 422)",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/extract",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "extract"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": []
+                }
+              }
+            },
+            {
+              "name": "Validation - empty payments (expect 400)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/match",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "match"
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"file_urls\": [\n    \"cheque1.jpg\"\n  ],\n  \"payments\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "Validation - unsupported file type",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/cheques/extract",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "cheques",
+                    "extract"
+                  ]
+                },
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    {
+                      "key": "files",
+                      "value": "this is not a cheque",
+                      "type": "text"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

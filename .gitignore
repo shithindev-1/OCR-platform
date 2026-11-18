@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+config/settings.local.json
+config/settings.uat.json
+config/settings.prod.json
+logs/
+detections/
+postman_output/
+learned_countries/
+.pytest_cache/
+.ruff_cache/

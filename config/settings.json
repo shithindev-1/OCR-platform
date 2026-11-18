@@ -1,0 +1,54 @@
+{
+  "_comment": "Shared defaults for every environment. Per-environment values go in settings.<APP_ENV>.json (not committed); secrets go in .env. Sections: 'common' (process-wide + every service), 'leasing', 'cheque'. Environment variables and .env override this file; LEASING_<NAME> / CHEQUE_<NAME> override <NAME> for one service.",
+
+  "common": {
+    "docs_enabled": true,
+    "log_level": "INFO",
+    "cors_origins": []
+  },
+
+  "cheque": {
+    "ocr_model": {
+      "gemini_temperature": 1.0,
+      "gemini_top_p": 0.95,
+      "gemini_top_k": 40,
+      "gemini_max_output_tokens": 4096,
+      "gemini_seed": null,
+      "gemini_thinking_budget": 0,
+      "gemini_thinking_level": null,
+      "gemini_timeout_seconds": 120,
+      "gemini_max_retries": 2
+    },
+
+    "uploads": {
+      "max_files_per_request": 20,
+      "max_file_size_mb": 15,
+      "max_concurrent_requests": 5
+    },
+
+    "file_urls": {
+      "allowed_file_hosts": [".blob.core.windows.net"],
+      "download_timeout_seconds": 60
+    },
+
+    "blob_storage": {
+      "azure_sas_expiry_hours": 0
+    },
+
+    "image_processing": {
+      "image_processing_enabled": true,
+      "processed_file_suffix": "_ocr",
+      "processed_folder": "ApplicationFiles/ChequeMatchOcr/Cropped",
+      "min_image_sharpness": 25,
+      "crop_padding_percent": 2.0,
+      "pdf_render_dpi": 200,
+      "processed_jpeg_quality": 92
+    },
+
+    "case_study": {
+      "_comment": "Files behind failed matches, with what the OCR read: <case_study_folder>/<request id>/; one line per failure in <case_study_folder>/_index/<date>.jsonl",
+      "case_study_enabled": true,
+      "case_study_folder": "ApplicationFiles/CaseStudy"
+    }
+  }
+}
