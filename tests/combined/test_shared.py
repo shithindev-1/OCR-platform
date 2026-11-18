@@ -9,12 +9,12 @@ import pytest
 from azure.core.exceptions import ResourceNotFoundError
 from pydantic import ValidationError
 
-from app.cheque.core.config import Settings as ChequeSettings
-from app.common.blob import BlobContainer, BlobError
-from app.common.config import PlatformSettings
-from app.common.pdf import image_to_pdf, render_pdf_page, render_pdf_pages
-from app.common.security import api_key_valid
-from app.leasing.core.config import Settings as LeasingSettings
+from app.core.cheque.config import Settings as ChequeSettings
+from app.core.config import PlatformSettings
+from app.core.leasing.config import Settings as LeasingSettings
+from app.core.security import api_key_valid
+from app.services.blob import BlobContainer, BlobError
+from app.services.pdf import image_to_pdf, render_pdf_page, render_pdf_pages
 
 CONNECTION = "DefaultEndpointsProtocol=https;AccountName=acct;AccountKey=a2V5;EndpointSuffix=core.windows.net"
 

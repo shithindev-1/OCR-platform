@@ -15,13 +15,13 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
+from app.core.leasing.config import settings
 from app.factory import build_app
-from app.leasing.core.config import settings
 
 app = build_app(["leasing"])
-from app.leasing.schemas.ocr import DATA_FIELDS
-from app.leasing.services import ocr_pipeline
-from app.leasing.services.gemini import get_gemini_service
+from app.schemas.leasing.ocr import DATA_FIELDS
+from app.services.leasing import ocr_pipeline
+from app.services.leasing.gemini import get_gemini_service
 
 
 def _png(color: str = "white") -> bytes:

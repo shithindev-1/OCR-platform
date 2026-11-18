@@ -1,8 +1,8 @@
 import asyncio
 
-from app.cheque.schemas import ChequeExtraction, TokenUsage
-from app.cheque.services.cheque_extractor import ChequeExtractor
-from app.cheque.utils.files import UploadedFile
+from app.schemas.cheque import ChequeExtraction, TokenUsage
+from app.services.cheque.cheque_extractor import ChequeExtractor
+from app.utils.cheque.files import UploadedFile
 
 WORDS = "Fourteen Thousand Only"
 
@@ -15,7 +15,7 @@ def _extractor(settings, *readings):
     extractor._semaphore = asyncio.Semaphore(1)
     calls = []
 
-    async def read(file):
+    async def read(file, call="extraction"):
         calls.append(file.name)
         return ChequeExtraction(cheques=readings[len(calls) - 1]), TokenUsage(total_tokens=10)
 

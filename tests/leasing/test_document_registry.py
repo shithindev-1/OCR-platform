@@ -4,14 +4,14 @@ from typing import Any
 
 import pytest
 
-from app.leasing.schemas.ocr import (
+from app.schemas.leasing.ocr import (
     COMPANY_EXTRACTION_FIELDS,
     DETECT_DOCUMENT_TYPES,
     INDIVIDUAL_EXTRACTION_FIELDS,
     PROPERTY_FIELDS,
 )
-from app.leasing.services import document_registry as registry
-from app.leasing.services.gemini import prompts
+from app.services.leasing import document_registry as registry
+from app.services.leasing.gemini import prompts
 
 
 def test_every_supported_type_has_an_entry() -> None:
@@ -59,12 +59,12 @@ def test_detect_endpoints_read_focused_and_old_endpoints_do_not(monkeypatch: pyt
     from fastapi.testclient import TestClient
     from PIL import Image
 
+    from app.core.leasing.config import settings
     from app.factory import build_app
-    from app.leasing.core.config import settings
     app = build_app(["leasing"])
-    from app.leasing.schemas.ocr import DATA_FIELDS
-    from app.leasing.services import blob_storage
-    from app.leasing.services.gemini import get_gemini_service
+    from app.schemas.leasing.ocr import DATA_FIELDS
+    from app.services.leasing import blob_storage
+    from app.services.leasing.gemini import get_gemini_service
 
     monkeypatch.setattr(settings, "detection_enabled", False)
     monkeypatch.setattr(settings, "validation_enabled", False)
@@ -100,7 +100,7 @@ def test_detect_endpoints_read_focused_and_old_endpoints_do_not(monkeypatch: pyt
 
 
 def test_a_place_field_with_no_letters_is_dropped_from_a_focused_reading() -> None:
-    from app.leasing.services.ocr_pipeline import drop_numeric_places
+    from app.services.leasing.ocr_pipeline import drop_numeric_places
 
     data = {"Passport_Issuing_Location": "3", "Nationality": "EGYPTIAN", "Home_City": "12-34",
             "Passport_Number": "A28334482", "Resident_City": "Dubai"}
@@ -115,7 +115,7 @@ def test_issuing_location_is_defined_as_a_place_never_an_office_code() -> None:
 
 
 def test_decoding_settings_are_sent_on_every_call() -> None:
-    from app.leasing.services.gemini import get_gemini_service
+    from app.services.leasing.gemini import get_gemini_service
 
     config = get_gemini_service()._generation_config()
     assert (config.temperature, config.seed, config.top_p, config.top_k) == (0.0, 0, 1.0, 1)
@@ -125,7 +125,7 @@ def test_decoding_settings_are_sent_on_every_call() -> None:
 # --- safety net: a focused reading that misses the document's own number is read again --------------
 
 def _reading(**values: Any) -> dict[str, Any]:
-    from app.leasing.schemas.ocr import DATA_FIELDS
+    from app.schemas.leasing.ocr import DATA_FIELDS
 
     return {"data": {**dict.fromkeys(DATA_FIELDS), **values}, "documentComplete": True,
             "documentTypesPresent": ["passport"], "frontVisible": True, "backVisible": True}
@@ -134,9 +134,9 @@ def _reading(**values: Any) -> dict[str, Any]:
 def _read(monkeypatch: pytest.MonkeyPatch, answers: dict[bool, Any], document_type: str = "passport") -> tuple[dict, list]:
     import asyncio
 
-    from app.leasing.services import result_cache
-    from app.leasing.services.gemini import get_gemini_service
-    from app.leasing.services.ocr_pipeline import extract_and_type_check
+    from app.services.leasing import result_cache
+    from app.services.leasing.gemini import get_gemini_service
+    from app.services.leasing.ocr_pipeline import extract_and_type_check
 
     calls: list[bool] = []
 
@@ -178,7 +178,7 @@ def test_a_focused_reading_with_its_own_number_is_not_read_again(monkeypatch: py
 
 
 def test_a_failed_general_reading_keeps_the_focused_reading(monkeypatch: pytest.MonkeyPatch) -> None:
-    from app.leasing.services.gemini.client import GeminiServiceError
+    from app.services.leasing.gemini.client import GeminiServiceError
 
     data, calls = _read(monkeypatch, {True: _reading(Tenant_Name_En="Magdy Ali"), False: GeminiServiceError("down")})
 
@@ -219,7 +219,7 @@ def test_page_numbering_is_never_a_problem_on_the_detect_self_check() -> None:
 # --- document-usage.log: tokens per document, adding up to the request's total -----------------------
 
 def test_tokens_are_charged_per_document_and_add_up_to_the_request() -> None:
-    from app.leasing.services.gemini import usage
+    from app.services.leasing.gemini import usage
 
     usage.start_usage_tracking()
     with usage.usage_for(("file scan.pdf #1", "")):
@@ -250,7 +250,7 @@ def test_tokens_are_charged_per_document_and_add_up_to_the_request() -> None:
 def test_timing_lists_each_stage_and_each_document_step() -> None:
     import time
 
-    from app.leasing.services.gemini import usage
+    from app.services.leasing.gemini import usage
 
     usage.start_usage_tracking(time.perf_counter() - 1.0)       # arrived a second ago
     usage.record_stage("receive", 1.0)

@@ -5,8 +5,8 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from app.cheque.schemas import ChequeOcr
-from app.cheque.services.image_processor import (
+from app.schemas.cheque import ChequeOcr
+from app.services.cheque.image_processor import (
     ImageProcessingError,
     crop,
     load_page,
@@ -86,7 +86,7 @@ def test_undecodable_image_raises():
 
 
 def test_tilt_is_measured_from_the_image():
-    from app.cheque.services.image_processor import measure_tilt, rotate
+    from app.services.cheque.image_processor import measure_tilt, rotate
 
     image = np.full((400, 900, 3), 255, np.uint8)
     for y in (80, 160, 240, 320):

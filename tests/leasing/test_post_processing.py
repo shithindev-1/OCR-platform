@@ -1,6 +1,6 @@
 import pytest
 
-from app.leasing.services.post_processing import (
+from app.services.leasing.post_processing import (
     document_type_matches,
     normalize_response,
     parse_extraction_text,

@@ -15,7 +15,7 @@ import os
 
 import uvicorn
 
-from app.common.config import SERVICE_NAMES, PlatformSettings
+from app.core.config import SERVICE_NAMES, PlatformSettings
 
 
 def main() -> None:

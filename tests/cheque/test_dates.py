@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from app.cheque.utils.dates import parse_date
+from app.utils.cheque.dates import parse_date
 
 NOV_5 = date(2026, 11, 5)
 

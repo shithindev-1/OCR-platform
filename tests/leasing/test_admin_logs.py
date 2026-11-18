@@ -3,9 +3,9 @@
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.v1.endpoints.leasing import admin_logs
+from app.core.leasing.config import settings
 from app.factory import build_app
-from app.leasing.api.v1.endpoints import admin_logs
-from app.leasing.core.config import settings
 
 ADMIN = {"X-Admin-Key": "admin-secret"}
 

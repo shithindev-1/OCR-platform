@@ -14,9 +14,9 @@ os.environ.setdefault("GEMINI_MODEL", "test-model")
 
 import pytest  # noqa: E402
 
-from app.leasing.core.config import settings  # noqa: E402
-from app.leasing.services import ocr_pipeline, result_cache  # noqa: E402
-from app.leasing.services.validation import _rate_events  # noqa: E402
+from app.core.leasing.config import settings  # noqa: E402
+from app.services.leasing import ocr_pipeline, result_cache  # noqa: E402
+from app.services.leasing.validation import _rate_events  # noqa: E402
 
 
 @pytest.fixture(autouse=True)

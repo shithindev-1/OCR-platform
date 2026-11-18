@@ -1,9 +1,9 @@
 import pytest
 from pydantic import ValidationError
 
-from app.cheque.schemas import ChequeEntity, ChequeInfo, FileResult, MatchRequest, RentPayment
-from app.cheque.schemas.matching import CHEQUE_INFO_IN_PAYMENT, CHEQUE_INFO_KEYS, share_cheque_info
-from app.cheque.services.payment_matcher import MATCHED, match_payments
+from app.schemas.cheque import ChequeEntity, ChequeInfo, FileResult, MatchRequest, RentPayment
+from app.schemas.cheque.matching import CHEQUE_INFO_IN_PAYMENT, CHEQUE_INFO_KEYS, share_cheque_info
+from app.services.cheque.payment_matcher import MATCHED, match_payments
 
 
 def _file(name: str, *cheques: tuple[float, str], error: str = None) -> tuple[str, FileResult]:
@@ -104,7 +104,7 @@ def test_only_matched_cheques_are_returned_for_cropping():
 
 
 def test_layout_fields_never_serialised():
-    from app.cheque.schemas import ChequeOcr
+    from app.schemas.cheque import ChequeOcr
 
     cheque = ChequeOcr(cheque_amount=1, bounding_box=[0, 0, 10, 10], text_top="left",
                        needs_crop=True, page=1)
@@ -213,7 +213,7 @@ def test_name_mismatch_added_to_date_mismatch():
 
 
 def _arabic_named_file(**fields) -> tuple[str, FileResult]:
-    from app.cheque.schemas import ChequeOcr
+    from app.schemas.cheque import ChequeOcr
 
     cheque = ChequeOcr(**{"cheque_amount": 8400, "cheque_date": "05-11-2026",
                           "amount_in_words": "Eight Thousand Four Hundred Only", **fields})
@@ -302,7 +302,7 @@ def test_unclear_holder_reported_once_for_both_keys():
 
 
 def test_unclear_arabic_name_drops_its_english_spelling():
-    from app.cheque.schemas import ChequeOcr
+    from app.schemas.cheque import ChequeOcr
 
     cheque = ChequeOcr(holder_name="محمد", holder_name_latin="Mohamed", unclear_fields=["holder_name"])
     assert cheque.holder_name is None and cheque.holder_name_latin is None
@@ -327,8 +327,8 @@ def test_unclear_amount_and_date():
 # ── cheque checks (OCR output goes through ChequeOcr validation) ──
 
 def _ocr_cheque(**fields):
-    from app.cheque.schemas import ChequeOcr
-    from app.common.timezones import now_uae
+    from app.core.timezones import now_uae
+    from app.schemas.cheque import ChequeOcr
 
     base = {"cheque_amount": 8400, "cheque_date": now_uae().strftime("%d-%m-%Y"),
             "amount_in_words": "Eight Thousand Four Hundred Only"}
@@ -395,7 +395,7 @@ def test_doubtful_date_parts_combined_with_other_fields():
 
 
 def test_unclear_date_cheque_explains_the_payment_not_a_wrong_date_one():
-    from app.cheque.schemas import ChequeOcr
+    from app.schemas.cheque import ChequeOcr
 
     altered = [{"code": "ALTERATION", "detail": "date"}]
     base = {"cheque_amount": 9333, "amount_in_words": "Nine Thousand Three Hundred Thirty Three Only",
@@ -413,7 +413,7 @@ def test_unclear_date_cheque_explains_the_payment_not_a_wrong_date_one():
 
 
 def test_exact_date_still_beats_unclear_date():
-    from app.cheque.schemas import ChequeOcr
+    from app.schemas.cheque import ChequeOcr
 
     words = "Nine Thousand Three Hundred Thirty Three Only"
     files = [("a.jpg", FileResult(file_name="a.jpg", status="success", cheques=[
@@ -429,7 +429,7 @@ def test_exact_date_still_beats_unclear_date():
 
 
 def test_cheque_with_missing_values_explains_the_payment_not_a_different_one():
-    from app.cheque.schemas import ChequeOcr
+    from app.schemas.cheque import ChequeOcr
 
     files = [("other.jpg", FileResult(file_name="other.jpg", status="success", cheques=[
                  ChequeOcr(cheque_date="27-10-2026", cheque_amount=16800,

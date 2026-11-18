@@ -9,8 +9,8 @@ import pypdfium2 as pdfium
 import pytest
 from PIL import Image, ImageDraw
 
-from app.leasing.core.config import Settings
-from app.leasing.services.detection import (
+from app.core.leasing.config import Settings
+from app.services.leasing.detection import (
     PageCrop,
     _build_detection,
     _gradient_magnitude,
@@ -810,7 +810,7 @@ def test_split_regions_may_be_far_smaller_than_the_box_calls_minimum() -> None:
     ],
 )
 def test_a_cut_out_uses_only_one_document_that_fills_most_of_it(documents, expected) -> None:
-    from app.leasing.services.detection import _single_document
+    from app.services.leasing.detection import _single_document
 
     detections = page_detections(page_number=1, width=400, height=300,
                                  page_result={"found": bool(documents), "documents": documents})
@@ -818,7 +818,7 @@ def test_a_cut_out_uses_only_one_document_that_fills_most_of_it(documents, expec
 
 
 def test_a_cut_out_with_two_boxes_keeps_only_the_largest() -> None:
-    from app.leasing.services.detection import _single_document
+    from app.services.leasing.detection import _single_document
 
     detections = page_detections(page_number=1, width=400, height=300, page_result={"found": True, "documents": [
         {"label": "edge of a neighbour", "corners": _corners(0.0, 0.0, 0.2, 0.3)},
@@ -832,8 +832,8 @@ def test_pdfs_are_rendered_one_at_a_time() -> None:
     # PDFium is not thread-safe: several PDFs of one request rendered in parallel threads crashed.
     import threading
 
-    from app.common import pdf as pdf_module
-    from app.leasing.services import detection
+    from app.services import pdf as pdf_module
+    from app.services.leasing import detection
 
     pdf_buffer = io.BytesIO()
     Image.new("RGB", (200, 120), "white").save(pdf_buffer, format="PDF")

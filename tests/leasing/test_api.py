@@ -4,8 +4,8 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
+from app.core.leasing.config import settings
 from app.factory import build_app
-from app.leasing.core.config import settings
 
 app = build_app(["leasing"])
 

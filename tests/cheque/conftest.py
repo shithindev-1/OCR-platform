@@ -1,6 +1,6 @@
 import pytest
 
-from app.cheque.core.config import Settings
+from app.core.cheque.config import Settings
 
 
 @pytest.fixture(autouse=True)

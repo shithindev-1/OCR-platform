@@ -8,11 +8,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
-from app.common.config import PlatformSettings, get_platform_settings
-from app.common.errors import register_exception_handlers
-from app.common.health import build_health_routers
-from app.common.service import Service
-from app.common.swagger import enable_swagger_file_picker
+from app.core.config import PlatformSettings, get_platform_settings
+from app.core.errors import register_exception_handlers
+from app.core.health import build_health_routers
+from app.core.logging import configure_common_logging
+from app.core.service import Service
+from app.core.swagger import enable_swagger_file_picker
 
 API_V1_PREFIX = "/api/v1"
 
@@ -24,15 +25,18 @@ _DESCRIPTIONS = {
 
 def load_service(name: str, platform: PlatformSettings) -> Service:
     # Imported only when switched on, so a service that is off never loads its settings or models.
-    return importlib.import_module(f"app.{name}.service").build_service(platform)
+    return importlib.import_module(f"app.core.{name}.service").build_service(platform)
 
 
 def build_app(services: Sequence[str] | None = None) -> FastAPI:
     platform = get_platform_settings()
     names = list(dict.fromkeys(services)) if services else platform.service_list
     loaded = [load_service(name, platform) for name in names]
+    shared = len(loaded) > 1  # two services in one process: keep their logs apart
     for service in loaded:
-        service.configure_logging()
+        service.configure_logging(shared)
+    if shared:
+        configure_common_logging(platform.log_directory)
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:

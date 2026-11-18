@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from app.leasing.core.config import settings
-from app.leasing.core.logging import (
+from app.core.leasing.config import settings
+from app.core.leasing.logging import (
     ConsoleAlertFormatter,
     ConsoleAlertHandler,
     configure_logging,

@@ -9,10 +9,10 @@ from typing import Any
 import httpx
 import pytest
 
-from app.leasing.core.config import settings
-from app.leasing.schemas.leasing import SourceDocument
-from app.leasing.services.leasing import sources
-from app.leasing.services.retention import purge_expired_files
+from app.core.leasing.config import settings
+from app.schemas.leasing.leasing import SourceDocument
+from app.services.leasing.leasing import sources
+from app.services.leasing.retention import purge_expired_files
 
 
 def _source(url: str) -> SourceDocument:

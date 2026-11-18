@@ -3,7 +3,7 @@ from typing import Any, Iterator
 import pytest
 from google.genai import types
 
-from app.leasing.services.gemini import (
+from app.services.leasing.gemini import (
     BOX_DETECTION_SCHEMA,
     ISSUES_SCHEMA,
     ORIENTATION_SCHEMA,

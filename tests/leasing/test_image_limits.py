@@ -3,7 +3,7 @@ import io
 import pytest
 from PIL import Image
 
-from app.leasing.services.gemini import downscale_image_for_api
+from app.services.leasing.gemini import downscale_image_for_api
 
 # The API rejects anything with an edge above this outright.
 API_HARD_LIMIT = 8000

@@ -13,15 +13,15 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
+from app.core.leasing.config import settings
 from app.factory import build_app
-from app.leasing.core.config import settings
 
 app = build_app(["leasing"])
-from app.leasing.schemas.ocr import COMPANY_DATA_FIELDS, COMPANY_EXTRACTION_FIELDS, DATA_FIELDS
-from app.leasing.services import blob_storage
-from app.leasing.services.gemini import get_gemini_service
-from app.leasing.services.leasing import sources
-from app.leasing.services.type_detection import service
+from app.schemas.leasing.ocr import COMPANY_DATA_FIELDS, COMPANY_EXTRACTION_FIELDS, DATA_FIELDS
+from app.services.leasing import blob_storage
+from app.services.leasing.gemini import get_gemini_service
+from app.services.leasing.leasing import sources
+from app.services.leasing.type_detection import service
 
 UPLOAD_URL = "/api/v1/ocr/leasing/detect/upload"
 FULL_PAGE = [{"x": 0, "y": 0}, {"x": 1, "y": 0}, {"x": 1, "y": 1}, {"x": 0, "y": 1}]
@@ -193,8 +193,8 @@ def test_an_unsupported_document_is_ignored_by_name_and_never_read(
 
 
 def test_an_unsupported_document_inside_a_shared_file_says_where_it_is() -> None:
-    from app.leasing.services.type_detection.segmentation import Segment
-    from app.leasing.services.type_detection.service import _unsupported_note
+    from app.services.leasing.type_detection.segmentation import Segment
+    from app.services.leasing.type_detection.service import _unsupported_note
 
     assert _unsupported_note(Segment("other", [2], detected_type="Driving licence"), "docs.pdf", shared=True) == (
         "The driving licence found on page 2 of 'docs.pdf' is not one of the accepted documents, so it was not used."
@@ -207,8 +207,8 @@ def test_an_unsupported_document_inside_a_shared_file_says_where_it_is() -> None
 def test_the_split_reads_the_name_of_an_unsupported_document() -> None:
     import numpy as np
 
-    from app.leasing.core.config import get_settings
-    from app.leasing.services.type_detection.segmentation import build_segments
+    from app.core.leasing.config import get_settings
+    from app.services.leasing.type_detection.segmentation import build_segments
 
     page = np.full((1000, 800, 3), 255, np.uint8)
     regions = [
@@ -344,7 +344,7 @@ def test_unreadable_file_fails_without_checking_the_others(client: TestClient, m
 def test_front_and_back_of_one_card_become_one_document_and_others_are_cut_out() -> None:
     import numpy as np
 
-    from app.leasing.services.type_detection.segmentation import build_segments
+    from app.services.leasing.type_detection.segmentation import build_segments
 
     page = np.full((300, 400, 3), 255, dtype=np.uint8)
     segments = build_segments(
@@ -363,7 +363,7 @@ def test_front_and_back_of_one_card_become_one_document_and_others_are_cut_out()
 
 
 def test_each_cut_out_document_gets_its_own_blob_result_path() -> None:
-    from app.leasing.services.type_detection.segmentation import Segment
+    from app.services.leasing.type_detection.segmentation import Segment
 
     item = {"source": "s", "filename": "Scan.pdf", "content": b"", "content_type": "application/pdf",
             "blob_path": "ApplicationFiles/42/Scan.pdf"}
@@ -384,7 +384,7 @@ JOBS_URL = "/api/v1/ocr/leasing/jobs"
 @pytest.fixture
 def live_client(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> Any:
     """A client whose event loop stays alive between requests, so a background job keeps running."""
-    import app.leasing.service as main_module
+    import app.core.leasing.service as main_module
 
     async def no_warm_up() -> None:
         return None
@@ -628,7 +628,7 @@ def test_company_tenants_are_one_per_licence_and_listed_signatory(client: TestCl
 def test_processed_files_are_named_after_their_type(
     client: TestClient, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from app.leasing.services.leasing.outputs import assign_type_file_names
+    from app.services.leasing.leasing.outputs import assign_type_file_names
 
     items = [
         {"blob_path": "Apps/1/scan_1_national_id.jpg", "source_blob_path": "Apps/1/scan.pdf"},
@@ -650,7 +650,7 @@ def test_processed_files_are_named_after_their_type(
 
 
 def test_processed_files_carry_their_tenant_when_there_are_several() -> None:
-    from app.leasing.services.leasing.outputs import assign_type_file_names
+    from app.services.leasing.leasing.outputs import assign_type_file_names
 
     items = [{"blob_path": f"Apps/1/f{index}.pdf"} for index in range(4)]
     documents = {
@@ -774,7 +774,7 @@ class _FakeBlob(blob_storage.BlobStorage):
 @pytest.fixture
 def cropping(monkeypatch: pytest.MonkeyPatch) -> None:
     """Crop/rotate on, stubbed: one upright crop per region the cut-out holds."""
-    from app.leasing.services.leasing import batch
+    from app.services.leasing.leasing import batch
 
     monkeypatch.setattr(settings, "detection_enabled", True)
 
@@ -863,7 +863,7 @@ def test_boxes_in_gemini_format_split_a_photo_of_several_cards() -> None:
     # The layout of a real test photo: passport left, ID front and back right, residence card below.
     import numpy as np
 
-    from app.leasing.services.type_detection.segmentation import build_segments
+    from app.services.leasing.type_detection.segmentation import build_segments
 
     page = np.full((1280, 1055, 3), 255, dtype=np.uint8)
     segments = build_segments([page], [{"regions": [
@@ -881,7 +881,7 @@ def test_boxes_in_gemini_format_split_a_photo_of_several_cards() -> None:
 
 
 def test_corners_on_a_0_to_1000_scale_are_read_as_such() -> None:
-    from app.leasing.services.type_detection.segmentation import _fractions
+    from app.services.leasing.type_detection.segmentation import _fractions
 
     corners = [{"x": 639, "y": 27}, {"x": 997, "y": 27}, {"x": 997, "y": 213}, {"x": 639, "y": 213}]
     assert _fractions(corners)[0] == {"x": 0.639, "y": 0.027}
@@ -1053,8 +1053,8 @@ async def _no_issues() -> list[str]:
 
 
 def test_a_numbered_document_is_named_once_and_the_fix_uses_its_plain_type() -> None:
-    from app.leasing.services.leasing.tenant_results import _unmatched_message
-    from app.leasing.services.type_detection.tenants import Unit
+    from app.services.leasing.leasing.tenant_results import _unmatched_message
+    from app.services.leasing.type_detection.tenants import Unit
 
     unit = Unit(key=(3,), document_type="ejari_certificate", data={"Tenant_Name_En": "Someone Else"})
     assert _unmatched_message(unit, "Ejari certificate 2", company=False, several=False) == (
@@ -1130,7 +1130,7 @@ def test_individual_responses_have_no_approval_keys(client: TestClient, monkeypa
 
 
 def test_short_messages_ask_for_dd_mm_yyyy_dates() -> None:
-    from app.leasing.services.gemini.prompts import SHORT_CROSS_MESSAGES, SHORT_SELF_MESSAGES
+    from app.services.leasing.gemini.prompts import SHORT_CROSS_MESSAGES, SHORT_SELF_MESSAGES
 
     assert "DD-MM-YYYY" in SHORT_SELF_MESSAGES and "DD-MM-YYYY" in SHORT_CROSS_MESSAGES
     assert "12/05/2023" not in SHORT_SELF_MESSAGES
@@ -1224,7 +1224,7 @@ def test_a_document_disagreeing_with_the_national_id_is_ignored_and_the_rest_pro
     (["National ID", "Visa"], {"National ID": "national_id", "Visa": "visa"}, True, ["National ID"]),  # signatory's own
 ])
 def test_the_reference_document_of_a_conflict(named, types, company, reference) -> None:
-    from app.leasing.services.leasing.tenant_results import _reference_labels
+    from app.services.leasing.leasing.tenant_results import _reference_labels
 
     assert _reference_labels(named, types, company) == reference
 
@@ -1246,7 +1246,7 @@ def test_the_reference_document_of_a_conflict(named, types, company, reference) 
      "'Visa' and 'Passport' disagree."),
 ])
 def test_conflict_messages_are_worded_for_each_document(conflict: dict[str, Any], document: str, expected: str) -> None:
-    from app.leasing.services.leasing.cross_messages import message_for
+    from app.services.leasing.leasing.cross_messages import message_for
 
     types = {"National ID": "national_id", "Passport": "passport", "Visa": "visa",
              "Trade licence": "trade_license", "Ejari certificate": "ejari_certificate"}
@@ -1254,7 +1254,7 @@ def test_conflict_messages_are_worded_for_each_document(conflict: dict[str, Any]
 
 
 def test_conflict_documents_named_by_type_or_case_still_resolve() -> None:
-    from app.leasing.services.leasing.cross_messages import resolve_documents
+    from app.services.leasing.leasing.cross_messages import resolve_documents
 
     types = {"Visa": "visa", "Passport": "passport", "National ID": "national_id",
              "National ID 1": "national_id", "National ID 2": "national_id"}
@@ -1268,8 +1268,8 @@ def test_a_card_side_lying_on_its_other_side_is_blanked_from_that_side_only() ->
     # Photo of one ID: the front lies on top of the back's right half (both document 3).
     import numpy as np
 
-    from app.leasing.services.detection import _build_detection
-    from app.leasing.services.type_detection.segmentation import COVER_FILL, _isolate, _Region
+    from app.services.leasing.detection import _build_detection
+    from app.services.leasing.type_detection.segmentation import COVER_FILL, _isolate, _Region
 
     page = np.full((400, 600, 3), 90, dtype=np.uint8)
 
@@ -1291,8 +1291,8 @@ def test_a_card_side_lying_on_its_other_side_is_blanked_from_that_side_only() ->
 def test_card_sides_with_no_order_are_left_whole() -> None:
     import numpy as np
 
-    from app.leasing.services.detection import _build_detection
-    from app.leasing.services.type_detection.segmentation import _isolate, _Region
+    from app.services.leasing.detection import _build_detection
+    from app.services.leasing.type_detection.segmentation import _isolate, _Region
 
     page = np.full((400, 600, 3), 90, dtype=np.uint8)
 
@@ -1306,7 +1306,7 @@ def test_card_sides_with_no_order_are_left_whole() -> None:
 
 
 def test_a_regions_own_number_in_covered_by_is_kept() -> None:
-    from app.leasing.services.type_detection.segmentation import _parse_label, _region_label
+    from app.services.leasing.type_detection.segmentation import _parse_label, _region_label
 
     label = _region_label({"document_type": "national_id", "side": "back", "document_number": 3,
                            "covered_by": [3, 2], "box_2d": [0, 0, 500, 500]}, 1, 0)
@@ -1328,7 +1328,7 @@ def test_a_regions_own_number_in_covered_by_is_kept() -> None:
     (None, "visa", [("x.pdf", [1])], None),
 ])
 def test_errors_name_the_place_in_a_shared_file(error, document_type, places, expected) -> None:
-    from app.leasing.services.type_detection.service import locate_error
+    from app.services.leasing.type_detection.service import locate_error
 
     assert locate_error(error, document_type, places) == expected
 
@@ -1380,8 +1380,8 @@ def test_user_9_errors_point_into_the_trade_licence_file(client: TestClient, mon
 
 def _record_split_tokens(monkeypatch: pytest.MonkeyPatch, regions: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
     """Split calls that record 100 + 10 tokens each, and a capture of every usage summary logged."""
-    from app.leasing.services import ocr_pipeline
-    from app.leasing.services.gemini import usage
+    from app.services.leasing import ocr_pipeline
+    from app.services.leasing.gemini import usage
 
     by_width = {_WIDTHS.setdefault(name, 400 + len(_WIDTHS)): found for name, found in regions.items()}
 
@@ -1438,8 +1438,8 @@ def _collage_regions() -> list[dict]:
 def test_small_cards_on_a_large_page_are_cut_out_not_taken_as_the_whole_page() -> None:
     import numpy as np
 
-    from app.leasing.core.config import get_settings
-    from app.leasing.services.type_detection.segmentation import build_segments
+    from app.core.leasing.config import get_settings
+    from app.services.leasing.type_detection.segmentation import build_segments
 
     page = np.full((1650, 1168, 3), 255, dtype=np.uint8)
     segments = build_segments([page], [{"regions": _collage_regions()}], get_settings())
@@ -1456,8 +1456,8 @@ def test_small_cards_on_a_large_page_are_cut_out_not_taken_as_the_whole_page() -
 def test_a_region_that_fell_back_to_the_whole_page_paints_nothing() -> None:
     import numpy as np
 
-    from app.leasing.services.detection import _build_detection
-    from app.leasing.services.type_detection.segmentation import COVER_FILL, _isolate, _Region
+    from app.services.leasing.detection import _build_detection
+    from app.services.leasing.type_detection.segmentation import COVER_FILL, _isolate, _Region
 
     page = np.full((400, 600, 3), 90, dtype=np.uint8)
     card = _Region(_build_detection(1, 1, "visa", 600, 400, [[20, 20], [300, 20], [300, 200], [20, 200]], "gemini_vision"),
@@ -1472,8 +1472,8 @@ def test_a_region_that_fell_back_to_the_whole_page_paints_nothing() -> None:
 def test_another_document_in_the_margin_around_a_cut_out_is_painted_out() -> None:
     import numpy as np
 
-    from app.leasing.services.detection import _build_detection
-    from app.leasing.services.type_detection.segmentation import COVER_FILL, _isolate, _Region
+    from app.services.leasing.detection import _build_detection
+    from app.services.leasing.type_detection.segmentation import COVER_FILL, _isolate, _Region
 
     page = np.full((400, 600, 3), 90, dtype=np.uint8)
     card = _Region(_build_detection(1, 1, "visa", 600, 400, [[20, 20], [300, 20], [300, 200], [20, 200]], "gemini_vision"),
@@ -1632,7 +1632,7 @@ def test_a_passport_disagreeing_with_a_card_sent_as_two_files_is_ignored(
 # --- passport issuing location: only ever from a passport ------------------------------------------
 
 def test_the_issuing_location_comes_only_from_a_passport() -> None:
-    from app.leasing.services.ocr_pipeline import merge_extracted_data
+    from app.services.leasing.ocr_pipeline import merge_extracted_data
 
     visa = {"document_type": "visa", "types_present": ["visa"],
             "data": {"Passport_Issuing_Location": "Dubai", "Visa_Number": "201/2023/1"}}
@@ -1649,8 +1649,8 @@ def test_the_issuing_location_comes_only_from_a_passport() -> None:
 
 
 def test_the_signatory_issuing_location_comes_only_from_a_passport() -> None:
-    from app.leasing.schemas.ocr import COMPANY_EXTRACTION_FIELDS
-    from app.leasing.services.ocr_pipeline import merge_extracted_data
+    from app.schemas.leasing.ocr import COMPANY_EXTRACTION_FIELDS
+    from app.services.leasing.ocr_pipeline import merge_extracted_data
 
     licence = {"document_type": "trade_license", "types_present": ["trade_license"],
                "data": {"Signatory_Passport_Issuing_Location": "Dubai"}}
@@ -1693,7 +1693,7 @@ def test_a_card_sent_as_two_files_is_found_by_any_of_its_names(
 
 
 def test_a_conflict_naming_one_known_document_never_crashes() -> None:
-    from app.leasing.services.leasing.cross_messages import message_for
+    from app.services.leasing.leasing.cross_messages import message_for
 
     message = message_for("Passport", {"documents": ["Passport"], "detail": "date_of_birth", "message": ""},
                           {"Passport": "passport"})
@@ -1712,8 +1712,8 @@ def test_a_conflict_naming_one_known_document_never_crashes() -> None:
 def test_a_malformed_split_answer_never_crashes(page_result: Any) -> None:
     import numpy as np
 
-    from app.leasing.core.config import get_settings
-    from app.leasing.services.type_detection.segmentation import build_segments
+    from app.core.leasing.config import get_settings
+    from app.services.leasing.type_detection.segmentation import build_segments
 
     page = np.full((1000, 800, 3), 255, np.uint8)
     build_segments([page], [page_result], get_settings())
@@ -1722,9 +1722,9 @@ def test_a_malformed_split_answer_never_crashes(page_result: Any) -> None:
 def test_a_split_answer_that_cannot_be_used_is_not_cached(monkeypatch: pytest.MonkeyPatch) -> None:
     import asyncio
 
-    from app.leasing.core.config import get_settings
-    from app.leasing.services import result_cache
-    from app.leasing.services.type_detection import segmentation
+    from app.core.leasing.config import get_settings
+    from app.services.leasing import result_cache
+    from app.services.leasing.type_detection import segmentation
 
     stored: dict[Any, Any] = {}
     monkeypatch.setattr(result_cache, "get", lambda key: stored.get(key))
@@ -1748,7 +1748,7 @@ def test_a_split_answer_that_cannot_be_used_is_not_cached(monkeypatch: pytest.Mo
 # --- rental index (type-detection only): matched to the tenant's Ejari or tenancy contract by property --
 
 def test_a_rental_index_matches_a_tenancy_by_contract_plot_building_or_area() -> None:
-    from app.leasing.services.type_detection.tenants import same_property
+    from app.services.leasing.type_detection.tenants import same_property
 
     ejari = {"Property_Area": "Al Barsha 1", "Property_Building": "Marina Heights", "Property_Plot_Number": "373-123",
              "Property_Contract_Number": "0123456789"}
@@ -1803,8 +1803,8 @@ def test_a_rental_index_for_another_property_is_ignored(client: TestClient, monk
 # --- commercial licence: its own type, read and grouped like a trade licence -----------------------
 
 def test_a_commercial_licence_counts_as_the_trade_licence_in_every_type_check() -> None:
-    from app.leasing.schemas.ocr import canonical_document_type, same_document_type
-    from app.leasing.services.post_processing import document_type_matches
+    from app.schemas.leasing.ocr import canonical_document_type, same_document_type
+    from app.services.leasing.post_processing import document_type_matches
 
     assert canonical_document_type("commercial_licence") == "commercial_license"
     assert same_document_type("commercial_license", "trade_license") and same_document_type("trade_license", "commercial_license")
@@ -1818,7 +1818,7 @@ def test_a_commercial_licence_counts_as_the_trade_licence_in_every_type_check() 
 def test_a_commercial_licence_satisfies_the_company_rule(detect: bool) -> None:
     from fastapi import HTTPException
 
-    from app.leasing.services.leasing.rules import require_mandatory_document
+    from app.services.leasing.leasing.rules import require_mandatory_document
 
     require_mandatory_document("company", ["commercial_license", "passport"], accept_initial_approval=detect)
     with pytest.raises(HTTPException):
@@ -2025,7 +2025,7 @@ def test_another_passports_page_is_never_joined_even_to_the_only_passport(
 
 def _track_crops(monkeypatch: pytest.MonkeyPatch) -> list[str]:
     """Turns cropping on and records the type of every document sent to crop/rotate."""
-    from app.leasing.services.leasing import batch
+    from app.services.leasing.leasing import batch
 
     cropped: list[str] = []
 

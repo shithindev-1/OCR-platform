@@ -4,9 +4,9 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import SecretStr
 
-from app.cheque.core.config import get_settings as cheque_settings
+from app.core.cheque.config import get_settings as cheque_settings
+from app.core.leasing.config import settings as leasing_settings
 from app.factory import build_app
-from app.leasing.core.config import settings as leasing_settings
 
 LEASING_PATHS = [
     "/api/v1/ocr",

@@ -7,10 +7,10 @@ from typing import Any
 
 import pytest
 
-from app.leasing.core.config import settings
-from app.leasing.services.leasing.outcomes import mask_numbers, without_private_keys
-from app.leasing.services.leasing.tenant_results import _set_aside_copies
-from app.leasing.services.type_detection.tenants import Tenant, Unit, copy_proof
+from app.core.leasing.config import settings
+from app.services.leasing.leasing.outcomes import mask_numbers, without_private_keys
+from app.services.leasing.leasing.tenant_results import _set_aside_copies
+from app.services.leasing.type_detection.tenants import Tenant, Unit, copy_proof
 
 ANUP = {"Tenant_Name_En": "Anupkumar Krishnan", "Date_Of_Birth": "22/12/1978"}
 EXPIRED = "Your National ID expired on 11-06-2025. Please upload a valid National ID."
@@ -182,7 +182,7 @@ def test_the_old_endpoint_response_is_unchanged_and_its_outcome_is_logged(
 
     from app.factory import build_app
     app = build_app(["leasing"])
-    from app.leasing.services import blob_storage
+    from app.services.leasing import blob_storage
     from tests.leasing.test_leasing_endpoint import _answer_by_filename, _raw, _upload
 
     monkeypatch.setattr(settings, "detection_enabled", False)

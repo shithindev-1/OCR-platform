@@ -2,11 +2,11 @@ import cv2
 import numpy as np
 import pytest
 
-from app.cheque.core.config import Settings
-from app.cheque.schemas import ChequeOcr, FileResult
-from app.cheque.services.blob_storage import BlobStorage
-from app.cheque.services.cheque_imaging import attach_cheque_files, processed_name
-from app.cheque.utils.files import UploadedFile
+from app.core.cheque.config import Settings
+from app.schemas.cheque import ChequeOcr, FileResult
+from app.services.cheque.blob_storage import BlobStorage
+from app.services.cheque.cheque_imaging import attach_cheque_files, processed_name
+from app.utils.cheque.files import UploadedFile
 
 FAKE_CONN = ("DefaultEndpointsProtocol=https;AccountName=acc;"
              "AccountKey=dGVzdGtleXRlc3RrZXk=;EndpointSuffix=core.windows.net")

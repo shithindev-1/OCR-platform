@@ -1,9 +1,9 @@
 import httpx
 import pytest
 
-from app.cheque.core.exceptions import FileValidationError
-from app.cheque.services.file_loader import file_name_from_source, load_file, redact
-from app.cheque.utils.files import sniff_mime_type
+from app.core.cheque.exceptions import FileValidationError
+from app.services.cheque.file_loader import file_name_from_source, load_file, redact
+from app.utils.cheque.files import sniff_mime_type
 
 PDF_BYTES = b"%PDF-1.4\n%test\n"
 

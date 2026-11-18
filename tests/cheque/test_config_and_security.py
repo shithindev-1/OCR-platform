@@ -5,9 +5,9 @@ from fastapi import Depends, FastAPI
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.cheque.api.errors import register_exception_handlers
-from app.cheque.api.security import require_api_key
-from app.cheque.core.config import Settings, get_settings
+from app.api.cheque.errors import register_exception_handlers
+from app.api.cheque.security import require_api_key
+from app.core.cheque.config import Settings, get_settings
 
 
 def _write(directory, name, data):

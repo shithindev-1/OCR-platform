@@ -1,6 +1,6 @@
 import pytest
 
-from app.leasing.services.names import same_name
+from app.services.leasing.names import same_name
 
 
 @pytest.mark.parametrize(("first", "second"), [

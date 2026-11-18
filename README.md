@@ -5,19 +5,20 @@ extraction and matching to rent payments) - built from the former `OCR_MULTI_FIL
 `Paperless_cheque` projects. Every URL, request and response is unchanged.
 
 ```
-app/
-  common/     what both services share: config, X-API-Key auth, health, error dispatch, Gemini client,
-              Azure Blob core, PDF render/write, timezones, Swagger file-picker fix
-  leasing/    the Leasing OCR things (was OCR_MULTI_FILES_API/app)
-    service.py   mounts Leasing into the app
-    api/v1/      router.py + endpoints/ (leasing, leasing_detect, ocr, admin_logs)
-    core/  schemas/  services/
-  cheque/     the Cheque things (was Paperless_cheque/app)
-    service.py   mounts Cheque into the app
-    api/v1/      router.py + endpoints/ (extraction, matching)
-    core/  schemas/  services/
-  factory.py  builds the one FastAPI app from whichever services are switched on
-  main.py     `app` for uvicorn / `python -m app`
+app/                       every layer has a leasing/ and a cheque/ folder; what both use sits at its root
+  api/
+    v1/endpoints/leasing/  leasing, leasing_detect, ocr, admin_logs
+    v1/endpoints/cheque/   extraction, matching
+    v1/routers/            leasing.py, cheque.py (each service's router)
+    leasing/  cheque/      request forms, API-key / error helpers of that service
+  services/                shared: Azure Blob core, Gemini client, PDF render/write
+    leasing/  cheque/      the OCR pipelines of each service
+  schemas/leasing|cheque/  request and response models
+  core/                    shared: config, X-API-Key auth, health, error dispatch, logging, timezones, Swagger fix
+    leasing/  cheque/      each service's settings, errors, logging, usage logs; service.py mounts it into the app
+  prompts/cheque/  utils/cheque/  data/leasing/
+  factory.py               builds the one FastAPI app from whichever services are switched on
+  main.py                  `app` for uvicorn / `python -m app`
 config/       settings.json (shared defaults), settings.example.json
 postman/      OCR_Platform.postman_collection.json (+ local environment)
 scripts/      build_postman.py - regenerates the collection
@@ -69,19 +70,45 @@ variable > `.env` > settings file > default.
 `LEASING_AZURE_STORAGE_CONNECTION_STRING`, `CHEQUE_MAX_FILE_SIZE_MB`, ... beats the plain `GEMINI_API_KEY`
 etc. that both read. That is how Leasing and Cheque get separate Gemini quotas and Blob accounts.
 
+## Logs: separate per service, nothing mixed
+
+Every record belongs to one bucket, by its logger name (`app/core/logging.py`):
+
+| Bucket | Logger names | Files |
+|---|---|---|
+| Leasing | `uae_ocr`, `uae_ocr.*` | `logs/leasing/`: `ocr-api`, `errors`, `alerts`, `hits`, `results`, `token-breakdown`, `usage`, `document-usage`, `timing`, `document-results`, `rotation` |
+| Cheque | `cheque`, `cheque.*` | `logs/cheque/<name>/<date>`: `app`, `errors`, `results`, `hits`, `token-breakdown`, `usage`, `document-usage`, `timing` |
+| Common | everything else (Uvicorn, the Gemini SDK, httpx, shared helpers) | `logs/common/alerts/<date>.log`, WARNING and above |
+
+- With two services in one process the buckets stay apart: a Cheque line never lands in a Leasing file or the
+  other way round, and a library warning is written once, in `common`. A service that runs alone keeps
+  everything in its own log (the common bucket only exists when two share a process).
+- **Cheque token and cost logs**, like Leasing's: `hits` (every Gemini call: tokens, time, status, document type),
+  `token-breakdown` (input split text / image / pdf, output split answer / thinking), `usage` (one line per request:
+  each kind of call and the total), `document-usage` (one line per document with its type and tokens; they add up
+  to the request's `usage` line), `timing` (request, stage and per-document times). A retry is logged as its own
+  call: its tokens are billed. A cheque file's document type is `cheque`. `estimated_cost_usd` is empty: multiply
+  the tokens by the model's current price.
+- **Every flow logs each step** with its request id: `START`, each file accepted or rejected, validation,
+  extraction (with the quality check), matching, cropping, case study, `SUMMARY`; Leasing logs `Request started` /
+  `Request finished` around its existing stage lines.
+- **stdout:** every line of every file is also printed, tagged with its file (`[cheque-api]`, `[cheque-hits]`,
+  `[ocr-api]`, `[usage]` ...). `LOG_TO_CONSOLE` (or `LEASING_LOG_TO_CONSOLE` / `CHEQUE_LOG_TO_CONSOLE`) =
+  `all` | `warnings` | `off`.
+
 ## What is shared now (one implementation instead of two)
 
 | Concept | Before | Now |
 |---|---|---|
-| X-API-Key check + Swagger scheme | 2 copies, 2 schemes | `common/security.py`, one scheme |
-| Health | 2 (`/health`, `/api/v1/health`) | `common/health.py`, both URLs kept |
-| Settings base, `.env`/JSON sources, key rules | 2 systems | `common/config.py` |
-| Gemini client construction | 2 | `common/gemini_client.py` |
-| Azure Blob connect / download / upload / warm-up | 2 | `common/blob.py` (each service keeps its own URL rules) |
-| PDF render and image-to-PDF | PDFium+Pillow vs PyMuPDF | `common/pdf.py` (PDFium + Pillow) |
-| UAE / IST timezones | 2 | `common/timezones.py` |
-| Swagger file-picker patch | Cheque only | `common/swagger.py`, whole app |
-| Exception handling | 2 apps | `common/errors.py` picks the handler by URL; each service keeps its own error format (`{"detail"}` / `errorInfo` vs `{"error"}`) |
+| X-API-Key check + Swagger scheme | 2 copies, 2 schemes | `core/security.py`, one scheme |
+| Health | 2 (`/health`, `/api/v1/health`) | `core/health.py`, both URLs kept |
+| Settings base, `.env`/JSON sources, key rules | 2 systems | `core/config.py` |
+| Gemini client construction | 2 | `services/gemini_client.py` |
+| Azure Blob connect / download / upload / warm-up | 2 | `services/blob.py` (each service keeps its own URL rules) |
+| PDF render and image-to-PDF | PDFium+Pillow vs PyMuPDF | `services/pdf.py` (PDFium + Pillow) |
+| UAE / IST timezones | 2 | `core/timezones.py` |
+| Swagger file-picker patch | Cheque only | `core/swagger.py`, whole app |
+| Exception handling | 2 apps | `core/errors.py` picks the handler by URL; each service keeps its own error format (`{"detail"}` / `errorInfo` vs `{"error"}`) |
 
 ## Tests
 

@@ -13,20 +13,20 @@ import pytest
 from fastapi.testclient import TestClient
 from PIL import Image
 
+from app.core.leasing.config import settings
 from app.factory import build_app
-from app.leasing.core.config import settings
 
 app = build_app(["leasing"])
-from app.leasing.schemas.ocr import (
+from app.schemas.leasing.ocr import (
     COMPANY_DATA_FIELDS,
     COMPANY_MISSING_INFO_FIELDS,
     DATA_FIELDS,
     MISSING_INFO_FIELDS,
 )
-from app.leasing.services import blob_storage
-from app.leasing.services.blob_storage import BlobStorage, BlobStorageError
-from app.leasing.services.gemini import get_gemini_service
-from app.leasing.services.leasing import batch, outputs
+from app.services.leasing import blob_storage
+from app.services.leasing.blob_storage import BlobStorage, BlobStorageError
+from app.services.leasing.gemini import get_gemini_service
+from app.services.leasing.leasing import batch, outputs
 
 UPLOAD_URL = "/api/v1/ocr/leasing/upload"
 
@@ -633,7 +633,7 @@ def test_company_returns_company_fields_in_form_data(client: TestClient, monkeyp
 def test_company_signatory_designation_comes_from_their_own_role_on_the_licence(
     client: TestClient, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    from app.leasing.schemas.ocr import COMPANY_EXTRACTION_FIELDS
+    from app.schemas.leasing.ocr import COMPANY_EXTRACTION_FIELDS
 
     async def fake_extract(**kwargs: Any) -> dict[str, Any]:
         data = dict.fromkeys(COMPANY_EXTRACTION_FIELDS)

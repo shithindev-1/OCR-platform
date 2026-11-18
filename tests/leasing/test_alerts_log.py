@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from app.leasing.core.config import settings
-from app.leasing.core.logging import AlertsFileHandler, configure_logging
+from app.core.leasing.config import settings
+from app.core.leasing.logging import AlertsFileHandler, configure_logging
 
 
 @pytest.fixture

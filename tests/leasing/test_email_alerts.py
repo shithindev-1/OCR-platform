@@ -5,9 +5,9 @@ import sys
 
 import pytest
 
-from app.leasing.core import alerts
-from app.leasing.core.alerts import EmailAlertHandler, build_alert, configure_email_alerts
-from app.leasing.core.config import Settings
+from app.core.leasing import alerts
+from app.core.leasing.alerts import EmailAlertHandler, build_alert, configure_email_alerts
+from app.core.leasing.config import Settings
 
 
 def _settings(**overrides) -> Settings:
@@ -191,9 +191,9 @@ def test_storage_and_stuck_job_alerts_get_their_own_titles(message, title):
 def test_storage_problems_on_our_side_are_errors_and_a_wrong_path_only_a_warning(monkeypatch, caplog):
     import asyncio
 
-    from app.leasing.schemas.leasing import SourceDocument
-    from app.leasing.services.blob_storage import BlobStorageError
-    from app.leasing.services.leasing import sources
+    from app.schemas.leasing.leasing import SourceDocument
+    from app.services.leasing.blob_storage import BlobStorageError
+    from app.services.leasing.leasing import sources
 
     source = SourceDocument(source="x", document_id="1", document_type="national_id", document_name="eid.pdf")
 
@@ -218,8 +218,8 @@ def test_a_link_to_a_storage_account_this_environment_does_not_use_is_an_error(m
 
     import httpx
 
-    from app.leasing.schemas.leasing import SourceDocument
-    from app.leasing.services.leasing import sources
+    from app.schemas.leasing.leasing import SourceDocument
+    from app.services.leasing.leasing import sources
 
     monkeypatch.setattr(sources.settings, "allowed_source_hosts", "")
 
@@ -266,7 +266,7 @@ def _levels(caplog, action) -> list[str]:
 def test_rate_limit_and_refused_files_and_lost_jobs_are_logged_as_errors(monkeypatch, caplog):
     from types import SimpleNamespace
 
-    from app.leasing.services import jobs, validation
+    from app.services.leasing import jobs, validation
 
     settings = _settings(rate_limit_requests=1, rate_limit_window_seconds=60)
     validation.enforce_rate_limit("ip:test-alerts:u", settings)
@@ -282,8 +282,8 @@ def test_rate_limit_and_refused_files_and_lost_jobs_are_logged_as_errors(monkeyp
 def test_a_wrong_api_key_and_plain_http_are_logged_as_errors(monkeypatch, caplog):
     from fastapi.testclient import TestClient
 
+    from app.core.leasing.config import settings
     from app.factory import build_app
-    from app.leasing.core.config import settings
     app = build_app(["leasing"])
 
     client = TestClient(app)

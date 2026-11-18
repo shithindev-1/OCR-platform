@@ -10,15 +10,15 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 from PIL import Image
 
-import app.leasing.service as main_module
+import app.core.leasing.service as main_module
+from app.core.leasing.config import settings
 from app.factory import build_app
-from app.leasing.core.config import settings
 
 app = build_app(["leasing"])
-from app.leasing.schemas.ocr import DATA_FIELDS
-from app.leasing.services import blob_storage, jobs
-from app.leasing.services.gemini import get_gemini_service
-from app.leasing.services.progress import ProgressTracker
+from app.schemas.leasing.ocr import DATA_FIELDS
+from app.services.leasing import blob_storage, jobs
+from app.services.leasing.gemini import get_gemini_service
+from app.services.leasing.progress import ProgressTracker
 
 JOBS_URL = "/api/v1/ocr/leasing/jobs"
 

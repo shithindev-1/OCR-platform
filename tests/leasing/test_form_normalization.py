@@ -5,15 +5,15 @@ import json
 
 import pytest
 
-from app.leasing.core.config import settings
-from app.leasing.services import country_learning
-from app.leasing.services.countries import EXACT_NAMES, country_name
-from app.leasing.services.form_normalization import (
+from app.core.leasing.config import settings
+from app.services.leasing import country_learning
+from app.services.leasing.countries import EXACT_NAMES, country_name
+from app.services.leasing.form_normalization import (
     format_date,
     format_gender,
     normalize_form_data,
 )
-from app.leasing.services.gemini import get_gemini_service
+from app.services.leasing.gemini import get_gemini_service
 
 
 @pytest.mark.parametrize(("value", "expected"), [

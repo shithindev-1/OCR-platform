@@ -5,8 +5,8 @@ from fastapi import HTTPException, UploadFile
 from PIL import Image
 from pypdf import PdfWriter
 
-from app.leasing.core.config import Settings
-from app.leasing.services.validation import enforce_rate_limit, validate_document_request
+from app.core.leasing.config import Settings
+from app.services.leasing.validation import enforce_rate_limit, validate_document_request
 
 
 def _settings(**overrides: object) -> Settings:

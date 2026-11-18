@@ -6,13 +6,13 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.cheque.api.deps import get_cheque_extractor
-from app.cheque.api.errors import register_exception_handlers
-from app.cheque.api.v1.endpoints import matching
-from app.cheque.core.config import get_settings
-from app.cheque.core.exceptions import ChequeInfoInPaymentError, InvalidChequeInfoError, InvalidPaymentsError
-from app.cheque.schemas import ChequeOcr, FileResult
-from app.cheque.services.matching_service import parse_cheque_info, parse_payments
+from app.api.cheque.deps import get_cheque_extractor
+from app.api.cheque.errors import register_exception_handlers
+from app.api.v1.endpoints.cheque import matching
+from app.core.cheque.config import get_settings
+from app.core.cheque.exceptions import ChequeInfoInPaymentError, InvalidChequeInfoError, InvalidPaymentsError
+from app.schemas.cheque import ChequeOcr, FileResult
+from app.services.cheque.matching_service import parse_cheque_info, parse_payments
 
 WORDS = "Nine Thousand Three Hundred Thirty Three Only"
 

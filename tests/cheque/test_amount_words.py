@@ -1,7 +1,7 @@
 import pytest
 
-from app.cheque.schemas import ChequeOcr
-from app.cheque.utils.amount_words import words_to_number
+from app.schemas.cheque import ChequeOcr
+from app.utils.cheque.amount_words import words_to_number
 
 
 @pytest.mark.parametrize("words, expected", [
